@@ -1,4 +1,5 @@
-#include<LiquidCrystal.h>
+#include <LiquidCrystal.h>
+
 
 ///*pin set*/// ----------analog pin 0 forbidden
 
@@ -14,21 +15,23 @@ const int rs = 2,
 const int buttom1 = 11,
           buttom2 = 12,
           buttom3 = 13;
+//buzzer
+const int buzzer = 4;
 
 ////*pin set*////  
 
 ////*lcd pattern*////
 LiquidCrystal lcd (rs,en,d4,d5,d6,d7);
-byte full[8] =
+byte bar[8] =
 {
-  0b11111111,
-  0b11111111,
-  0b11111111,
-  0b11111111,
-  0b11111111,
-  0b11111111,
-  0b11111111,
-  0b11111111
+  0b00000,
+  0b00100,
+  0b01110,
+  0b11111,
+  0b11111,
+  0b01110,
+  0b00100,
+  0b00000
 };
 byte heart[8] =
 {
@@ -55,11 +58,11 @@ byte circle1[8] =
 byte circle2[8] =
 {
   0b00000,
-  0b00000,
-  0b00011,
-  0b00111,
-  0b01111,
-  0b01111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
   0b11111,
   0b11111
 };
@@ -107,6 +110,18 @@ byte circle6[8] =
   0b00000,
   0b00000
 };
+
+byte full[8] =
+{
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111
+};
 /*lcd pattern*/
 
 /////*bool var*/////
@@ -133,11 +148,12 @@ void setup() {
   pinMode(buttom1,INPUT);
   pinMode(buttom2,INPUT);
   pinMode(buttom3,INPUT);
+  pinMode(buzzer,OUTPUT);
   randomSeed(analogRead(0));
   
 
   /*pattern creating*/
-  lcd.createChar(0,full);
+  lcd.createChar(0,bar);
   lcd.createChar(1,circle1);
   lcd.createChar(2,circle2);
   lcd.createChar(3,circle3);
@@ -145,37 +161,121 @@ void setup() {
   lcd.createChar(5,circle5);
   lcd.createChar(6,circle6);
   lcd.createChar(7,heart);  
+  lcd.createChar(8,full);
+  
+ 
+
 
 
 }
+void loop(){
 
-void loop() {
+  starting();
+  if(!timeOut){
+    loading();
+  }
+ 
 
-  consolePlay();
-  
+ 
+ 
+ 
+ 
+ 
+
   
 }
 
 ///////////////////////////////////////////////////////-------------------method------------------//////////////////////////////////////////////////////////////////////////////////
+void starting(){
 
-void menu(){                               // displaying menu and waitting for any click
-
-  lcd.setCursor(0,0);
-  lcd.print("loading....");
-  lcd.blink();
+  lcd.clear();
+  delay(500);
+  showCircle(2);
+  showCircle(7);
+  showCircle(12);
   delay(1000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("   DOT-GAME!!");
+  delay(500);
+  lcd.setCursor(0,1);
+  lcd.blink();
+  delay(200);
+  String click = "click any bottom";
+  for(int i=0;i<click.length();i++){
+    lcd.print(click.charAt(i));
+    delay(100);
+  }
+  lcd.noBlink();
+  waiting();
+  lcd.clear();
+  
+  String instruction1 ="CLICK THE BOTTOMS" ;
+  String instruction2 ="IN THE RIGHT ORDER OF APPEARING OF DOTS";
+  lcd.setCursor(0,0);
+  lcd.blink();
+  for(int i=0;i<instruction1.length();i++){    
+    lcd.print(instruction1.charAt(i)); 
+    if(i==15)
+      lcd.scrollDisplayLeft();
+    delay(200);
+  }
+   
+   delay(300);
+   lcd.clear();
+   lcd.noBlink();
+   delay(700);
+   lcd.setCursor(0,1);
+   lcd.blink();
+  for(int i=0;i<instruction2.length();i++){
+    lcd.print(instruction2.charAt(i));
+    if(i>14)
+      lcd.scrollDisplayLeft();
+    delay(200);
+  }
+  delay(1000);
+  lcd.clear();
+  lcd.noBlink();
+  delay(800);
+  lcd.setCursor(0,1);
+  delay(300);
+  lcd.print("got it?");
+  lcd.blink();
+  tone(buzzer,300,100);
+  waiting();
+  lcd.noBlink();
+  
+  lcd.clear();
+  return;
+  
+
+}
+
+void loading(){                               // displaying menu and waitting for any click
+
+  
+  timeOut = false;
+  lcd.setCursor(0,0);
+  lcd.blink();
+  String load = "loading....";
+  for(int i=0;i<load.length();i++){
+    lcd.print(load.charAt(i));
+    delay(200);
+  }
+  delay(1000);
+  lcd.noBlink();
   lcd.setCursor(0,1);
   delay(500);
-  lcd.noBlink();
+
 
   for(int i=0;i<13;i++){                    //loading bar
-    lcd.write(byte(0));
+    lcd.write((byte)8);
     delay( random(300,500) );
   }
 
   for(int i=0;i<3;i++){
-    lcd.write(byte(0));
-    delay( random(500,1000) );
+    lcd.write((byte)8);
+    delay( random(800,2000) );
   }
 
   delay(100);
@@ -184,11 +284,13 @@ void menu(){                               // displaying menu and waitting for a
   lcd.blink();
   String ready="Ready ?";
 
+
   for(int i=0;i<ready.length();i++){
     lcd.print(ready.charAt(i));
-    delay(400);
-  }               
-                            
+    delay(500);
+  }
+  lcd.noBlink();               
+  tone(buzzer,300,100);                       
   waiting();
 
   if(timeOut){
@@ -198,7 +300,7 @@ void menu(){                               // displaying menu and waitting for a
     return;
   }
 
-  lcd.noBlink();
+
   delay(1000);
   lcd.clear();                                //waiting for game start
 
@@ -233,18 +335,19 @@ void displayQuestion(){                                                   //lcd 
 }
 
 void displayHeart(){                                                         //lcd display remaining heart
-  lp = lp-1;                                                                // 3 condition 2,1,0 
+
+   if(isWrong)
+     lp -= 1;
+
+  Serial.print("heart:");
+  Serial.println(lp);
 
   if(lp==0){
     Serial.println("gg!");
-    lp=3;
     isLose=true;
     return;
   }
 
-  Serial.print("heart:");
-  Serial.println(lp);
-  
   return;
 }
 
@@ -288,13 +391,13 @@ void setQuestion(int stage_question[],int size){                //making stage_q
 void answering(int stage_answer[],int size){                //answering question
 
   int starTime = millis();
-  int duration;
+  int duration=0;
   int n=0;
   Serial.println("answering");
   while(n<size){
 
     duration = millis() - starTime;
-    delay(250);
+    delay(50);
     
     if(digitalRead(buttom1)){
 
@@ -303,6 +406,9 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
+      showCircle(2);
+      delay(300);
+      lcd.clear();
       n++;
       continue;
     }
@@ -314,6 +420,9 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
+      showCircle(5);
+      delay(300);
+      lcd.clear();
       n++;
       continue;
     }
@@ -325,12 +434,14 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
+      showCircle(11);
+      delay(300);
+      lcd.clear();
       n++;
       continue;
     }
     if(duration>30000){                          ///30 seconds to answer
-      lp -= 1;
-      displayHeart();
+      timeOut = true;
       return;
     }
   }
@@ -343,8 +454,11 @@ void checking(int stage_question[],int stage_answer[],int size){            //ch
 
   for(int i=0;i<size;i++){
 
-    if(stage_question[i]!=stage_answer[i]){
+    if(stage_question[i]!=stage_answer[i]&&timeOut){
+     
+      isWrong = true ;
       displayHeart();
+      
 
       if( isLose){
         losing();
@@ -368,10 +482,11 @@ void checking(int stage_question[],int stage_answer[],int size){            //ch
 void consolePlay(){
 
   Serial.println();
+  lp=3;
   delay(2000);
 
   for(int j=1;j<=3;j++){
-    for(int i=0;i<j*5;i++){
+    for(int i=0;i<5;i++){
       Serial.print("stage:");
       Serial.print(j);
       Serial.print("-");
@@ -395,23 +510,27 @@ void waiting(){
  
  int starTime = millis();
  timeOut = false;
- int duration;
+ int duration = 0;
+ Serial.println("on waiting");
+
 
  while(duration<30000){             //waiting for 30 second
  
    duration = millis() - starTime;
+   
    Serial.println(duration);
 
    if(digitalRead(buttom1)||digitalRead(buttom2)||digitalRead(buttom3)){
       Serial.println("click");
+      tone(buzzer,500,50);
       return;
    }
  }
  timeOut = true;                           
  return;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////test
 
+/**************
 void randomTest(){
 
   int n=100;
@@ -463,3 +582,4 @@ void buttomTest(){
   
   return;
 }
+*//////////////
