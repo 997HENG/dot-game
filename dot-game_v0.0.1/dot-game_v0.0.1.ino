@@ -216,6 +216,9 @@ void starting(){
   lcd.noBlink();
   waiting();
   lcd.clear();
+  if(timeOut){
+    return;
+  }
   
   String instruction1 ="CLICK THE BOTTOMS" ;
   String instruction2 ="IN THE RIGHT ORDER OF APPEARING OF DOTS";
@@ -296,9 +299,10 @@ void loading(){                               // displaying menu and waitting fo
     lcd.print(ready.charAt(i));
     delay(500);
   }
-  lcd.noBlink();               
+            
   tone(buzzer,300,100);                       
   waiting();
+  lcd.noBlink();
 
   if(timeOut){
 
@@ -310,13 +314,37 @@ void loading(){                               // displaying menu and waitting fo
   isReady = true;
   delay(1000);
   lcd.clear();                                //waiting for game start
+  stage();
 
   return;
 
 }
 
 
-void stage(){                               
+void stage(){     
+   
+  delay(2000);
+  displayHeart();
+
+  for(int j=1;j<=3;j++){
+    for(int i=0;i<3;i++){
+      Serial.print("stage:");
+      Serial.print(j);
+      Serial.print("-");
+      Serial.println(i+1);
+      Serial.println("---------------");
+      setQuestion(stage_question,3+2*j,1500-(i+1)*300);
+      answering(stage_answer,3+2*j);
+      checking(stage_question,stage_answer,3+2*j,1500-(i+1)*300);
+      Serial.println();
+      if(isLose){
+        return;
+      }
+      delay(5000);
+    }
+  }
+  
+                          
 
 }
 
@@ -354,7 +382,8 @@ void displayCircle(int init){                              //displaying circle f
 
 void displayHeart(){                                                         //lcd display remaining heart
    lcd.clear();
-   if(lp==0){
+
+   if(lp==1){
      Serial.println("gg!");
      isLose=true;
      lp = 3;
@@ -410,16 +439,16 @@ void displayQuestion(int stage_question[],int size,int difficulty){             
 void losing(){                                                       //lcd display losing scene
   
   Serial.println("GAME OVER!!");
-  lp = 3;
   return;
+}
+
+void wining(){
+
 }
 
 void ending(){                                                     //lcd display ending scene
 
   return;
-}
-void wining(){
-
 }
 ///////////////////////////////////////logical method
 
@@ -507,14 +536,14 @@ void checking(int stage_question[],int stage_answer[],int size,int difficulty){ 
       if(stage_question[i]!=stage_answer[i]||timeOut){
   
         isWrong = true ;
-        displayHeart();
+        
 
+        displayHeart();
+        Serial.println("wrong answer");
         if( isLose){
           losing();        
           return;
         }
-
-        Serial.println("wrong answer");
         setQuestion(stage_question,size,difficulty);
         answering(stage_answer,size);
         checking(stage_question,stage_answer,size,difficulty);
@@ -573,7 +602,7 @@ void waiting() {
  
    duration = millis() - starTime;
    
-   Serial.println(duration);
+
 
    if(digitalRead(buttom1)||digitalRead(buttom2)||digitalRead(buttom3)){
       Serial.println("click");
