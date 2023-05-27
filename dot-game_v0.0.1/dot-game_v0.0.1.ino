@@ -177,10 +177,12 @@ void loop(){
  
 
  
- 
- 
- 
- 
+  consolePlay();
+
+
+
+
+
 
   
 }
@@ -189,10 +191,15 @@ void loop(){
 void starting(){
 
   lcd.clear();
+  lp=3;
+  isReady = false;
+  isLose = false;
+  isWrong = false;
+  timeOut = false;
   delay(500);
-  showCircle(2);
-  showCircle(7);
-  showCircle(12);
+  displayCircle(2);
+  displayCircle(7);
+  displayCircle(12);
   delay(1000);
   lcd.clear();
   lcd.setCursor(0,0);
@@ -296,11 +303,11 @@ void loading(){                               // displaying menu and waitting fo
   if(timeOut){
 
     timeOut = false;
-    showPussy();
+    isReady = false;
     return;
   }
 
-
+  isReady = true;
   delay(1000);
   lcd.clear();                                //waiting for game start
 
@@ -315,9 +322,9 @@ void stage(){
 
 //////////////////////////////////////////////////////lcd display pattern
 
-void showCircle(int init){                              //displaying circle from init column
+void displayCircle(int init){                              //displaying circle from init column... 2 for left , 7 for middle , 11 for right
 
-  lcd.setCursor(init,0);
+  lcd.setCursor(init,0);                                
   lcd.write(byte(1));
   lcd.write((byte)2);
   lcd.write((byte)3);
@@ -326,39 +333,84 @@ void showCircle(int init){                              //displaying circle from
   lcd.write((byte)5);
   lcd.write((byte)6);
 
-  return;
-}
-
-void displayQuestion(){                                                   //lcd display question
-
-  return;
-}
-
-void displayHeart(){                                                         //lcd display remaining heart
-
-   if(isWrong)
-     lp -= 1;
-
-  Serial.print("heart:");
-  Serial.println(lp);
-
-  if(lp==0){
-    Serial.println("gg!");
-    isLose=true;
-    return;
+   if(init == 2 && isReady){
+    tone(buzzer,500,100);
+    delay(300);
+    lcd.clear();
+  }
+  else if(init == 7 && isReady){
+    tone(buzzer,900,100);
+    delay(300);
+    lcd.clear();
+  }
+  else if(init == 12 && isReady){
+    tone(buzzer,1200,100);
+    delay(300);
+    lcd.clear();
   }
 
   return;
 }
 
-void showPussy(){                                                       //lcd display pussy
+void displayHeart(){                                                         //lcd display remaining heart
+   lcd.clear();
+   if(lp==0){
+     Serial.println("gg!");
+     isLose=true;
+     lp = 3;
+     return;
+   }
 
+   if(isWrong){
+     lp -= 1;
+     isWrong = false;
+    }
+   Serial.print("heart:");
+   Serial.println(lp);
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("HEART:");
+
+   for(int i=0;i<lp;i++){
+     lcd.print(" ");
+     lcd.write((byte)7);
+     delay(500);
+   }
+   lcd.blink(); 
+
+   tone(buzzer,100,100);
+   delay(1000);
+   lcd.noBlink();
+   
+   
+   
+   lcd.clear();
+   delay(500);
   return;
 }
+
+void displayQuestion(int stage_question[],int size,int difficulty){                      //lcd display question
+
+  for(int i=0;i<size;i++){
+    if(stage_question[i] == 0)
+      displayCircle(2);
+    else if (stage_question[i] == 1)
+      displayCircle(7);
+    else if (stage_question[i] == 2)
+      displayCircle(12);
+    delay(difficulty);
+  }
+
+  return;
+
+}
+
+//////////////////////////////////scene
 
 void losing(){                                                       //lcd display losing scene
   
   Serial.println("GAME OVER!!");
+  lp = 3;
   return;
 }
 
@@ -366,24 +418,27 @@ void ending(){                                                     //lcd display
 
   return;
 }
+void wining(){
 
+}
 ///////////////////////////////////////logical method
 
-void setQuestion(int stage_question[],int size){                //making stage_question
+void setQuestion(int stage_question[],int size,int difficulty){                //making stage_question
+
   
   Serial.println("settingQuestion");
 
   for(int i=0;i<size;i++){                                      // 0 for b1, 1 for b2, 2 for b3.
     stage_question[i] = random(0,3);
   }
-
+   
    for(int i=0;i<size;i++){     
     Serial.print("stage_question[");
     Serial.print(i);
     Serial.print("]");      
     Serial.println(stage_question[i]);
   }
-  displayQuestion();
+  displayQuestion(stage_question,size,difficulty);
 
   return;
 }
@@ -406,9 +461,7 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
-      showCircle(2);
-      delay(300);
-      lcd.clear();
+      displayCircle(2);
       n++;
       continue;
     }
@@ -420,9 +473,7 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
-      showCircle(5);
-      delay(300);
-      lcd.clear();
+      displayCircle(7);
       n++;
       continue;
     }
@@ -434,9 +485,7 @@ void answering(int stage_answer[],int size){                //answering question
       Serial.print(n);
       Serial.print("]:");
       Serial.println(stage_answer[n]);
-      showCircle(11);
-      delay(300);
-      lcd.clear();
+      displayCircle(12);
       n++;
       continue;
     }
@@ -444,33 +493,34 @@ void answering(int stage_answer[],int size){                //answering question
       timeOut = true;
       return;
     }
+   
   }
   
   
   return;
 }
 
-void checking(int stage_question[],int stage_answer[],int size){            //checking result
+void checking(int stage_question[],int stage_answer[],int size,int difficulty){            //checking result
 
   for(int i=0;i<size;i++){
 
-    if(stage_question[i]!=stage_answer[i]&&timeOut){
-     
-      isWrong = true ;
-      displayHeart();
-      
+      if(stage_question[i]!=stage_answer[i]||timeOut){
+  
+        isWrong = true ;
+        displayHeart();
 
-      if( isLose){
-        losing();
+        if( isLose){
+          losing();        
+          return;
+        }
+
+        Serial.println("wrong answer");
+        setQuestion(stage_question,size,difficulty);
+        answering(stage_answer,size);
+        checking(stage_question,stage_answer,size,difficulty);
+      
         return;
       }
-
-      Serial.println("wrong answer");
-      setQuestion(stage_question,size);
-      answering(stage_answer,size);
-      checking(stage_question,stage_answer,size);
-      return;
-    }
     
   }
   Serial.println("right answer");
@@ -483,18 +533,23 @@ void consolePlay(){
 
   Serial.println();
   lp=3;
+  isReady = true ;
+  isLose = false ;
+  isWrong = false;
+  timeOut = false;
   delay(2000);
+  displayHeart();
 
   for(int j=1;j<=3;j++){
-    for(int i=0;i<5;i++){
+    for(int i=0;i<3;i++){
       Serial.print("stage:");
       Serial.print(j);
       Serial.print("-");
       Serial.println(i+1);
       Serial.println("---------------");
-      setQuestion(stage_question,j*5);
-      answering(stage_answer,j*5);
-      checking(stage_question,stage_answer,j*5);
+      setQuestion(stage_question,3+2*j,1500-(i+1)*300);
+      answering(stage_answer,3+2*j);
+      checking(stage_question,stage_answer,3+2*j,1500-(i+1)*300);
       Serial.println();
       if(isLose){
         return;
@@ -506,7 +561,7 @@ void consolePlay(){
 
 }
 
-void waiting(){
+void waiting() {
  
  int starTime = millis();
  timeOut = false;
@@ -529,57 +584,3 @@ void waiting(){
  timeOut = true;                           
  return;
 }
-
-/**************
-void randomTest(){
-
-  int n=100;
-  int cnt1=0;
-  int cnt2=0;
-  int cnt3=0;
-  int arry[3];
-
-  while(n-->0){
-    arry[random(0,3)]+=1;
-    Serial.print("arry[0]:");
-    Serial.println(arry[0]);
-    Serial.print("arry[1]:");
-    Serial.println(arry[1]);
-    Serial.print("arry[2]:");
-    Serial.println(arry[2]);
-    Serial.print(100-n);
-    Serial.println(" times");
-    Serial.println();
-    delay(500);
- } 
-
- return;
-}
-
-void aryTest(int ary[],int length){
-
-  for(int i=0;i<length;i++){
-    ary[i]=random(0,50);
-  }
-  for(int i=0;i<length;i++){
-    Serial.println(ary[i]);
-    delay(1000);
-  }
-
-  delay(3000);
-
-  return;
-}
-
-void buttomTest(){
-
-  if(digitalRead(buttom1))
-    Serial.println("buttom1");
-  if(digitalRead(buttom2))
-    Serial.println("buttom2");
-  if(digitalRead(buttom3))
-    Serial.println("buttom3");
-  
-  return;
-}
-*//////////////
