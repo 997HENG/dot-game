@@ -171,20 +171,16 @@ void setup() {
 void loop(){
 
   starting();
-  if(!timeOut){
+  if(isReady){
     loading();
   }
  
 
- 
-  consolePlay();
-
-
-
-
-
 
   
+  lcd.clear();
+  delay(5000);
+
 }
 
 ///////////////////////////////////////////////////////-------------------method------------------//////////////////////////////////////////////////////////////////////////////////
@@ -217,6 +213,10 @@ void starting(){
   waiting();
   lcd.clear();
   if(timeOut){
+    timeOut = false;
+    isReady = false;
+    lcd.clear();
+    lcd.noBlink();
     return;
   }
   
@@ -253,9 +253,17 @@ void starting(){
   lcd.blink();
   tone(buzzer,300,100);
   waiting();
+  if(timeOut){
+    timeOut = false;
+    isReady = false;
+    lcd.clear();
+    lcd.noBlink();
+    return;
+  }
   lcd.noBlink();
   
   lcd.clear();
+  isReady = true;
   return;
   
 
@@ -263,8 +271,7 @@ void starting(){
 
 void loading(){                               // displaying menu and waitting for any click
 
-  
-  timeOut = false;
+  isReady = false;
   lcd.setCursor(0,0);
   lcd.blink();
   String load = "loading....";
@@ -308,13 +315,16 @@ void loading(){                               // displaying menu and waitting fo
 
     timeOut = false;
     isReady = false;
+    lcd.clear();
+    lcd.noBlink();
     return;
   }
 
-  isReady = true;
+
   delay(1000);
   lcd.clear();                                //waiting for game start
   stage();
+  ending();
 
   return;
 
@@ -323,29 +333,24 @@ void loading(){                               // displaying menu and waitting fo
 
 void stage(){     
    
-  delay(2000);
-  displayHeart();
-
-  for(int j=1;j<=3;j++){
-    for(int i=0;i<3;i++){
-      Serial.print("stage:");
-      Serial.print(j);
-      Serial.print("-");
-      Serial.println(i+1);
-      Serial.println("---------------");
-      setQuestion(stage_question,3+2*j,1500-(i+1)*300);
-      answering(stage_answer,3+2*j);
-      checking(stage_question,stage_answer,3+2*j,1500-(i+1)*300);
-      Serial.println();
-      if(isLose){
-        return;
-      }
-      delay(5000);
-    }
+  delay(1000);
+  String hint = "YOU ONLY HAVE THREE CHANCES";
+  lcd.setCursor(0, 0);
+  lcd.blink();
+  for(int i=0;i<hint.length();i++){
+    lcd.print(hint.charAt(i));
+    if(i>14)
+      lcd.scrollDisplayLeft();
+    delay(200);
   }
-  
-                          
-
+  delay(300);
+  lcd.noBlink();
+  lcd.clear();
+  displayHeart();
+  delay(500);
+  lcd.clear(); 
+  consolePlay();                        
+  return;
 }
 
 //////////////////////////////////////////////////////lcd display pattern
@@ -398,7 +403,7 @@ void displayHeart(){                                                         //l
    Serial.println(lp);
    lcd.clear();
    lcd.setCursor(0,0);
-   lcd.print("HEART:");
+   lcd.print("HEARTS:");
 
    for(int i=0;i<lp;i++){
      lcd.print(" ");
@@ -427,6 +432,7 @@ void displayQuestion(int stage_question[],int size,int difficulty){             
       displayCircle(7);
     else if (stage_question[i] == 2)
       displayCircle(12);
+    lcd.clear();
     delay(difficulty);
   }
 
@@ -437,16 +443,50 @@ void displayQuestion(int stage_question[],int size,int difficulty){             
 //////////////////////////////////scene
 
 void losing(){                                                       //lcd display losing scene
-  
-  Serial.println("GAME OVER!!");
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.blink();
+  String lose = "GAME OVER!!!";
+  for(int i =0;i<lose.length();i++){
+    lcd.print(lose.charAt(i));
+    delay(200);
+  }
+  tone(buzzer,300,100);
+  waiting();
+  lcd.noBlink();
+  lcd.clear();
   return;
 }
 
 void wining(){
-
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.blink();
+  String lose = "YOU WON!!!";
+  for(int i =0;i<lose.length();i++){
+    lcd.print(lose.charAt(i));
+    delay(200);
+  }
+  tone(buzzer,300,100);
+  waiting();
+  lcd.noBlink();
+  lcd.clear();
+  return;
 }
 
 void ending(){                                                     //lcd display ending scene
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.blink();
+  String lose = "end";
+  for(int i =0;i<lose.length();i++){
+    lcd.print(lose.charAt(i));
+    delay(200);
+  }
+  tone(buzzer,300,100);
+  waiting();
+  lcd.noBlink();
+  lcd.clear();
 
   return;
 }
@@ -478,6 +518,13 @@ void answering(int stage_answer[],int size){                //answering question
   int duration=0;
   int n=0;
   Serial.println("answering");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.blink();
+  tone(buzzer,1000,200);
+  delay(800);
+  lcd.noBlink();
+  lcd.clear();
   while(n<size){
 
     duration = millis() - starTime;
@@ -536,6 +583,18 @@ void checking(int stage_question[],int stage_answer[],int size,int difficulty){ 
       if(stage_question[i]!=stage_answer[i]||timeOut){
   
         isWrong = true ;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.blink();
+        String wrong = "WRONG!!";
+        for(int i =0;i<wrong.length();i++){
+          lcd.print(wrong.charAt(i));
+          delay(200);
+        }
+        tone(buzzer,300,100);
+        delay(500);
+        lcd.noBlink();
+        lcd.clear();
         
 
         displayHeart();
@@ -553,6 +612,18 @@ void checking(int stage_question[],int stage_answer[],int size,int difficulty){ 
     
   }
   Serial.println("right answer");
+  lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.blink();
+        String right = "RIGHT!!";
+        for(int i =0;i<right.length();i++){
+          lcd.print(right.charAt(i));
+          delay(200);
+        }
+        tone(buzzer,300,100);
+        delay(500);
+        lcd.noBlink();
+        lcd.clear();
   return;
 }
 
@@ -566,8 +637,6 @@ void consolePlay(){
   isLose = false ;
   isWrong = false;
   timeOut = false;
-  delay(2000);
-  displayHeart();
 
   for(int j=1;j<=3;j++){
     for(int i=0;i<3;i++){
@@ -576,6 +645,14 @@ void consolePlay(){
       Serial.print("-");
       Serial.println(i+1);
       Serial.println("---------------");
+      lcd.setCursor(0, 0);
+      lcd.print("stage ");
+      lcd.print(j);
+      lcd.print("-");
+      lcd.print(i+1);
+      delay(1000);
+      lcd.clear();
+      delay(1000);
       setQuestion(stage_question,3+2*j,1500-(i+1)*300);
       answering(stage_answer,3+2*j);
       checking(stage_question,stage_answer,3+2*j,1500-(i+1)*300);
@@ -583,10 +660,14 @@ void consolePlay(){
       if(isLose){
         return;
       }
-      delay(5000);
+      delay(1000);
     }
   }
+  if(!isLose){
+    wining();
+  }
   
+  return;
 
 }
 
